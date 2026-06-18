@@ -69,3 +69,20 @@ class CartItem(Base):
 
     user = relationship("User", back_populates="cart_items")
     dish = relationship("Dish")
+
+
+class Order(Base):
+    __tablename__ = "orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    status = Column(
+        Enum(OrderStatus), nullable=False, default=OrderStatus.PENDING, index=True
+    )
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    user = relationship("User", back_populates="orders")
+    items = relationship(
+        "OrderItem", back_populates="order", cascade="all, delete-orphan"
+    )
+
