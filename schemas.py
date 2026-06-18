@@ -35,3 +35,22 @@ class DishOut(DishBase):
     category: DishCategory
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ---------- Cart ----------
+
+class CartItemCreate(BaseModel):
+    dish_id: int
+    quantity: int = Field(..., gt=0)
+
+
+class CartItemUpdate(BaseModel):
+    quantity: int = Field(..., gt=0)
+
+
+class CartItemOut(BaseModel):
+    id: int
+    dish: DishOut
+    quantity: int
+
+    model_config = ConfigDict(from_attributes=True)
