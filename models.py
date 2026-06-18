@@ -55,3 +55,17 @@ class Dish(Base):
     category = Column(Enum(DishCategory), nullable=False, index=True)
     is_available = Column(Boolean, default=True, nullable=False)
     image_url = Column(String(500), nullable=True)
+
+
+class CartItem(Base):
+    __tablename__ = "cart_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    dish_id = Column(Integer, ForeignKey("dishes.id"), nullable=False)
+    quantity = Column(Integer, nullable=False, default=1)
+
+    user = relationship("User", back_populates="cart_items")
+    dish = relationship("Dish")
