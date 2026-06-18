@@ -70,3 +70,21 @@ def get_current_admin(user: User = Depends(get_current_user)) -> User:
             detail="Требуются права администратора",
         )
     return user
+
+
+@router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+def register(data: UserCreate, db: Session = Depends(get_db)):
+    if db.query(User).filter(User.email == data.email).first():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Пользователь с таким email уже существует",
+        )
+    user = User(
+        email=data.email,
+        hashed_password=hash_password(data.password),
+        is_admin=False,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
