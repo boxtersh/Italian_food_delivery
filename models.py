@@ -43,3 +43,15 @@ class User(Base):
         "CartItem", back_populates="user", cascade="all, delete-orphan"
     )
     orders = relationship("Order", back_populates="user")
+
+
+class Dish(Base):
+    __tablename__ = "dishes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    price = Column(Numeric(10, 2), nullable=False)
+    category = Column(Enum(DishCategory), nullable=False, index=True)
+    is_available = Column(Boolean, default=True, nullable=False)
+    image_url = Column(String(500), nullable=True)
