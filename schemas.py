@@ -83,3 +83,23 @@ class OrderOut(BaseModel):
 
 class OrderStatusUpdate(BaseModel):
     status: OrderStatus
+
+
+# ---------- Auth / User ----------
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=6)
+
+
+class UserOut(BaseModel):
+    id: int
+    email: EmailStr
+    is_admin: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
