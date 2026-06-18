@@ -54,3 +54,28 @@ class CartItemOut(BaseModel):
     quantity: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ---------- Order ----------
+
+class OrderItemOut(BaseModel):
+    id: int
+    dish: DishOut
+    quantity: int
+    price: Decimal  # цена за единицу на момент заказа
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class OrderOut(BaseModel):
+    id: int
+    status: OrderStatus
+    created_at: datetime
+    items: List[OrderItemOut]
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @computed_field
+    @property
+    def total(self) -> Decimal:
+        return sum((item.price * item.quantity for item in self.items), Decimal("0"))
