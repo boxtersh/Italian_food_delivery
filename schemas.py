@@ -14,7 +14,7 @@ class DishBase(BaseModel):
     description: Optional[str] = None
     price: Decimal = Field(..., ge=0)
     is_available: bool = True
-    image_url: Optional[str] = None
+    image_url: Optional[str] = '/static/images/placeholders/no_photo.webp'
 
 
 class DishCreate(DishBase):
@@ -89,13 +89,18 @@ class OrderStatusUpdate(BaseModel):
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str = Field(..., min_length=6)
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    password: str = Field(..., min_length=8)
 
 
-class UserOut(BaseModel):
+class UserResponse(BaseModel):
     id: int
     email: EmailStr
+    name: Optional[str] = None
+    phone: Optional[str] = None
     is_admin: bool
+    created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 

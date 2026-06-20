@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import User
-from schemas import Token, UserCreate, UserOut
+from schemas import Token, UserCreate, UserResponse
 from config import settings
 
 SECRET_KEY = settings.secret_key
@@ -72,7 +72,7 @@ def get_current_admin(user: User = Depends(get_current_user)) -> User:
     return user
 
 
-@router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register(data: UserCreate, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == data.email).first():
         raise HTTPException(
@@ -106,6 +106,6 @@ def login(
     return Token(access_token=token)
 
 
-@router.get("/me", response_model=UserOut)
+@router.get("/me", response_model=UserResponse)
 def me(user: User = Depends(get_current_user)):
     return user
