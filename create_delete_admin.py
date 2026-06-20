@@ -24,6 +24,9 @@ def data_for_function(mode):
         name = input('Введите имя администратора >> ').strip()
         phone = input('Введите телефон администратора >> ').strip()
         password = input('Введите пароль >> ').strip()
+        if not email or not password:
+            print("Ошибка: email и пароль обязательны.")
+            return None
         return {
             'email': email,
             'name': name,
