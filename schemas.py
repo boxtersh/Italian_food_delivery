@@ -2,7 +2,8 @@ from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field, field_validator
+import re
 
 from models import DishCategory, OrderStatus
 
@@ -89,10 +90,25 @@ class OrderStatusUpdate(BaseModel):
 
 class UserCreate(BaseModel):
     email: EmailStr
-    name: Optional[str] = None
-    phone: Optional[str] = None
+    name: str | None = None
+    phone: str | None = None
     password: str = Field(..., min_length=8)
 
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        cleaned = re.sub(r"[^\d+]", "", v)
+        match_plus7 = re.fullmatch(r"\+7\d{10}", cleaned)
+        match_8 = re.fullmatch(r"8\d{10}", cleaned)
+
+        if match_plus7:
+            return cleaned
+        elif match_8:
+            return "+7" + cleaned[1:]
+        else:
+            raise ValueError("Номер телефона должен состоять из 11 цифр и начинаться на +7 или 8")
 
 class UserResponse(BaseModel):
     id: int
