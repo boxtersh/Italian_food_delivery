@@ -1,5 +1,5 @@
 import enum
-from datetime import datetime, timezone
+from datetime import datetime
 from sqlalchemy import (
     Boolean,
     Column,
@@ -17,11 +17,11 @@ from database import Base
 
 
 class DishCategory(str, enum.Enum):
-    PIZZA = "pizza"
-    PASTA = "pasta"
-    SALAD = "salad"
-    DESSERT = "dessert"
-    DRINK = "drink"
+    PIZZA = "PIZZA"
+    PASTA = "PASTA"
+    SALAD = "SALAD"
+    DESSERT = "DESSERT"
+    DRINK = "DRINK"
 
 
 class OrderStatus(str, enum.Enum):
