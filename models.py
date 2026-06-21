@@ -100,7 +100,6 @@ class OrderItem(Base):
     )
     dish_id = Column(Integer, ForeignKey("dishes.id"), nullable=False)
     quantity = Column(Integer, nullable=False)
-    # цена за единицу на момент оформления заказа
     price = Column(Numeric(10, 2), nullable=False)
 
     order = relationship("Order", back_populates="items")
