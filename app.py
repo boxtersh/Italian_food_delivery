@@ -51,3 +51,8 @@ app.include_router(admin_orders.router)
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+
+@app.get("/policy_confidence", response_class=HTMLResponse)
+def policy_confidence(request: Request):
+    return templates.TemplateResponse("policy_confidence.html", {"request": request})
