@@ -1,7 +1,9 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
+from sqlalchemy.orm import Session
+from sqlalchemy import select
 
 from routers.auth import router as auth_router
 from routers.client import pizzas as client_pizzas
@@ -18,8 +20,11 @@ from routers.admin import desserts as admin_desserts
 from routers.admin import drinks as admin_drinks
 from routers.admin import orders as admin_orders
 
+from database import get_db
+from models import Dish, DishCategory
+
 app = FastAPI(
-    title="Italian Food Delivery 🍕",
+    title="Italian Food Delivery",
     description="Веб-приложение для онлайн-заказа блюд итальянской кухни",
     version="1.0.0",
 )
@@ -49,8 +54,19 @@ app.include_router(admin_orders.router)
 
 
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+def index(request: Request, db: Session = Depends(get_db)):
+    stmt = select(Dish).where(Dish.is_available == True)
+    results = db.execute(stmt).scalars().all()
+    dishes_by_category = {cat.value: [] for cat in DishCategory}
+
+    for dish in results:
+        cat_name = dish.category.value
+        if cat_name in dishes_by_category:
+            dishes_by_category[cat_name].append(dish)
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "dishes": dishes_by_category
+    })
 
 
 @app.get("/policy_confidence", response_class=HTMLResponse)
