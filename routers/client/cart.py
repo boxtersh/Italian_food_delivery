@@ -1,103 +1,88 @@
-from typing import List
-
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.orm import Session
+from jose import jwt
+import json
 
 from database import get_db
 from models import CartItem, Dish, User
-from schemas import CartItemCreate, CartItemUpdate, CartItemOut
-from routers.auth import get_current_user
-
-router = APIRouter(prefix="/cart", tags=["client: cart"])
+from schemas import CartItemCreate
+from config import settings
 
 
-@router.get("", response_model=List[CartItemOut])
-def get_cart(
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+router = APIRouter(prefix="/cart", tags=["cart"])
+
+
+@router.post("/add")
+async def add_to_cart(
+        request: Request,
+        response: Response,
+        payload: CartItemCreate,
+        db: Session = Depends(get_db),
 ):
-    return db.query(CartItem).filter(CartItem.user_id == user.id).all()
 
-
-@router.post("", response_model=CartItemOut, status_code=status.HTTP_201_CREATED)
-def add_to_cart(
-    data: CartItemCreate,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
-):
-    if data.quantity <= 0:
-        raise HTTPException(status_code=400, detail="Количество должно быть больше 0")
-
-    dish = (
-        db.query(Dish)
-        .filter(Dish.id == data.dish_id, Dish.is_available == True)  # noqa: E712
-        .first()
-    )
+    dish = db.query(Dish).filter(Dish.id == payload.dish_id).first()
     if not dish:
-        raise HTTPException(status_code=404, detail="Блюдо не найдено или недоступно")
+        raise HTTPException(status_code=404, detail="Блюдо не найдено")
 
-    # если блюдо уже в корзине — увеличиваем количество
-    item = (
-        db.query(CartItem)
-        .filter(CartItem.user_id == user.id, CartItem.dish_id == data.dish_id)
-        .first()
-    )
-    if item:
-        item.quantity += data.quantity
+    current_user = None
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+
+    if token:
+        try:
+            payload_jwt = jwt.decode(token, settings.secret_key, algorithms=settings.algorithm)
+            sub = payload_jwt.get("sub")
+            if sub:
+                current_user = db.query(User).filter(User.id == int(sub)).first()
+        except Exception:
+            pass
+
+
+    if current_user:
+        existing_item = db.query(CartItem).filter(
+            CartItem.user_id == current_user.id,
+            CartItem.dish_id == payload.dish_id
+        ).first()
+
+        if existing_item:
+            existing_item.quantity += payload.quantity
+        else:
+            new_item = CartItem(user_id=current_user.id, dish_id=payload.dish_id, quantity=payload.quantity)
+            db.add(new_item)
+
+        db.commit()
+
+        cart_size = db.query(CartItem).filter(CartItem.user_id == current_user.id).count()
+
+        return {
+            "status": "added",
+            "cart_size": cart_size,
+            "message": f"{dish.name} добавлено в вашу корзину",
+            "is_guest": False
+        }
+
     else:
-        item = CartItem(user_id=user.id, dish_id=data.dish_id, quantity=data.quantity)
-        db.add(item)
+        guest_cart_cookie = request.cookies.get("guest_cart")
+        guest_ids = []
 
-    db.commit()
-    db.refresh(item)
-    return item
+        if guest_cart_cookie:
+            try:
+                guest_ids = json.loads(guest_cart_cookie)
+            except:
+                guest_ids = []
 
+        for _ in range(payload.quantity):
+            guest_ids.append(payload.dish_id)
 
-@router.put("/{item_id}", response_model=CartItemOut)
-def update_cart_item(
-    item_id: int,
-    data: CartItemUpdate,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
-):
-    if data.quantity <= 0:
-        raise HTTPException(status_code=400, detail="Количество должно быть больше 0")
+        response.set_cookie(
+            key="guest_cart",
+            value=json.dumps(guest_ids),
+            max_age=60 * 60 * 24 * 7,
+            httponly=False
+        )
 
-    item = (
-        db.query(CartItem)
-        .filter(CartItem.id == item_id, CartItem.user_id == user.id)
-        .first()
-    )
-    if not item:
-        raise HTTPException(status_code=404, detail="Позиция корзины не найдена")
-
-    item.quantity = data.quantity
-    db.commit()
-    db.refresh(item)
-    return item
-
-
-@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
-def remove_cart_item(
-    item_id: int,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
-):
-    item = (
-        db.query(CartItem)
-        .filter(CartItem.id == item_id, CartItem.user_id == user.id)
-        .first()
-    )
-    if not item:
-        raise HTTPException(status_code=404, detail="Позиция корзины не найдена")
-    db.delete(item)
-    db.commit()
-
-
-@router.delete("", status_code=status.HTTP_204_NO_CONTENT)
-def clear_cart(
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
-):
-    db.query(CartItem).filter(CartItem.user_id == user.id).delete()
-    db.commit()
+        return {
+            "status": "added",
+            "cart_size": len(guest_ids),
+            "message": f"{dish.name} добавлено в корзину (как гость)",
+            "is_guest": True
+        }

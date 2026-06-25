@@ -8,8 +8,6 @@ import re
 from models import DishCategory, OrderStatus
 
 
-# ---------- Dish ----------
-
 class DishBase(BaseModel):
     name: str
     description: Optional[str] = None
@@ -19,7 +17,6 @@ class DishBase(BaseModel):
 
 
 class DishCreate(DishBase):
-    # category задаём роутером принудительно
     pass
 
 
@@ -38,8 +35,6 @@ class DishOut(DishBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ---------- Cart ----------
-
 class CartItemCreate(BaseModel):
     dish_id: int
     quantity: int = Field(..., gt=0)
@@ -57,13 +52,11 @@ class CartItemOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ---------- Order ----------
-
 class OrderItemOut(BaseModel):
     id: int
     dish: DishOut
     quantity: int
-    price: Decimal  # цена за единицу на момент заказа
+    price: Decimal
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -86,29 +79,38 @@ class OrderStatusUpdate(BaseModel):
     status: OrderStatus
 
 
-# ---------- Auth / User ----------
-
 class UserCreate(BaseModel):
     email: EmailStr
     name: str | None = None
-    phone: str | None = None
-    password: str = Field(..., min_length=8)
+    phone: str
+    password: str
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("Пароль должен содержать не менее 8 символов")
+        return v
 
     @field_validator("phone")
     @classmethod
-    def validate_phone(cls, v: str | None) -> str | None:
-        if v is None:
-            return v
-        cleaned = re.sub(r"[^\d+]", "", v)
-        match_plus7 = re.fullmatch(r"\+7\d{10}", cleaned)
-        match_8 = re.fullmatch(r"8\d{10}", cleaned)
+    def validate_phone(cls, v: str) -> str:
+        value = v.strip()
 
-        if match_plus7:
-            return cleaned
-        elif match_8:
-            return "+7" + cleaned[1:]
-        else:
-            raise ValueError("Номер телефона должен состоять из 11 цифр и начинаться на +7 или 8")
+        if value.startswith("+7"):
+            digits = re.sub(r"\D", "", value)
+            if len(digits) != 11 or not digits.startswith("7"):
+                raise ValueError("Телефон должен начинаться на 8 или +7 и содержать 11 цифр")
+            return "+" + digits
+
+        if value.startswith("8"):
+            digits = re.sub(r"\D", "", value)
+            if len(digits) != 11 or not digits.startswith("8"):
+                raise ValueError("Телефон должен начинаться на 8 или +7 и содержать 11 цифр")
+            return digits
+
+        raise ValueError("Телефон должен начинаться на 8 или +7 и содержать 11 цифр")
+
 
 class UserResponse(BaseModel):
     id: int
