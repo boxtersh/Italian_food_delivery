@@ -41,13 +41,19 @@ def data_for_function(mode):
     return None
 
 
-def add_admin(db: Session, user: User) -> None:
-    existing = db.query(User).filter(User.email == user.email).first()
-    if existing:
-        print(f"  • Пользователь {user.email} уже существует")
+def add_admin(db: Session, user: User, buff_password: str) -> None:
+    existing_email = db.query(User).filter(User.email == user.email).first()
+    if existing_email:
+        print(f"Пользователь с таким email: {user.email} уже существует!!!\n"
+              f"Программа завершена")
+        return
+    existing_phone = db.query(User).filter(User.phone == user.phone).first()
+    if existing_phone:
+        print(f"Пользователь с таким телефоном: {user.phone} уже существует!!!\n"
+              f"Программа завершена")
         return
     db.add(user)
-    print(f"  ✓ Создан пользователь {user.email} (пароль: {user.hashed_password})")
+    print(f"  Создан администратор {user.email} (не забудьте свой пароль: {buff_password})")
     db.commit()
 
 
@@ -71,14 +77,15 @@ def main() -> None:
         mode = select_choosing_mode_operation_with_administrator_rights()
         if mode == '1':
             dict_user = data_for_function(mode)
+            buff_password = dict_user['password']
             dict_user['hashed_password'] = hash_password(dict_user.pop('password'))
             user = User(**dict_user)
-            add_admin(db, user)
+            add_admin(db, user, buff_password)
         elif mode == '2':
             email = data_for_function(mode)
             del_admin(db, email)
         else:
-            print('Выход из программы')
+            print('Программа завершена')
 
     finally:
         db.close()
