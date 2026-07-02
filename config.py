@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from fastapi.templating import Jinja2Templates
 
 
 class Settings(BaseSettings):
@@ -8,7 +9,8 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int
     base_url: str
     server_host: str = "127.0.0.1"
-    server_port: int = 8000
+    server_port: int
+    static_upload_path: str
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -18,3 +20,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+templates = Jinja2Templates(directory="templates", auto_reload=True)
