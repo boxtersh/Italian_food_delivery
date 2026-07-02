@@ -1,38 +1,51 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Доставка еды | Italian Food</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/index.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Italian Food Delivery</title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/css/auth_modal.css" />
+    <link rel="stylesheet" href="/static/css/index.css" />
 </head>
 <body>
-
 <div class="page-wrapper">
     <div class="banner">
-        <img src="/static/images/uploads/header/index.webp" alt="Баннер доставки еды" class="banner-image">
+        <img
+            src="/static/images/uploads/header/index.webp"
+            alt="Баннер доставки еды"
+            class="banner-image"
+        />
     </div>
 
     {% set categories = [
         ('PIZZA', 'Пицца'),
         ('PASTA', 'Паста'),
-        ('SALAD', 'Салат'),
-        ('DESSERT', 'Десерт'),
+        ('SALAD', 'Салаты'),
+        ('DESSERT', 'Десерты'),
         ('DRINK', 'Напитки')
     ] %}
 
-    <div class="tabs-toolbar bg-white shadow-sm">
+    <div class="tabs-toolbar shadow-sm">
         <div class="container h-100">
-            <div class="toolbar-inner d-flex justify-content-between align-items-center gap-3 h-100">
+            <div class="toolbar-inner d-flex justify-content-between align-items-center gap-3 h-100 flex-wrap">
                 <ul class="nav nav-tabs border-0 flex-nowrap mb-0" id="dishTabs" role="tablist">
                     {% for key, label in categories %}
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link {% if loop.first %}active{% endif %}"
-                                    id="{{ key|lower }}-tab"
-                                    data-bs-toggle="tab"
-                                    data-bs-target="#{{ key|lower }}"
-                                    type="button" role="tab">
+                            <button
+                                class="nav-link {% if loop.first %}active{% endif %}"
+                                id="{{ key }}-tab"
+                                data-bs-toggle="tab"
+                                data-bs-target="#{{ key }}"
+                                type="button"
+                                role="tab"
+                                aria-controls="{{ key }}"
+                                aria-selected="{% if loop.first %}true{% else %}false{% endif %}"
+                            >
                                 {{ label }}
                             </button>
                         </li>
@@ -40,28 +53,51 @@
                 </ul>
 
                 <div class="d-flex align-items-center gap-2 toolbar-buttons">
-                    <div class="d-flex align-items-center gap-2 ms-auto">
-                        {% if current_user %}
-                            <span class="text-dark fw-bold d-none d-md-block">Привет, {{ current_user.name }}</span>
-                            <button type="button" class="btn btn-danger btn-sm" id="btn-logout">Выйти</button>
-                        {% else %}
-                            <button type="button"
-                                    class="btn btn-primary btn-sm"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#authModal">
-                                Войти
-                            </button>
-                        {% endif %}
-                    </div>
+                    {% if current_user %}
+                        <span class="text-dark fw-bold d-none d-md-block">
+                            Привет, {{ current_user.name }}
+                        </span>
 
-                    <a href="/cart" class="btn btn-primary btn-sm position-relative">
-                        Корзина
-                        {% if cart_count > 0 %}
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="cart-badge">
-                                {{ cart_count }}
-                            </span>
+                        {% if current_user.is_admin %}
+                            <a href="/admin/orders" class="btn btn-danger-my btn-sm">Администратор</a>
                         {% endif %}
-                    </a>
+                        <a href="/client/profile" class="btn btn-outline-secondary btn-sm me-2">Профиль</a>
+                        <a href="/cart" class="btn cart-btn btn-sm position-relative">
+                            Корзина
+                            <span
+                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger js-cart-badge"
+                                {% if cart_count <= 0 %}style="display: none;"{% endif %}
+                            >
+                                {{ cart_count if cart_count > 0 else 0 }}
+                            </span>
+                        </a>
+
+                        <button
+                            type="button"
+                            class="btn cart-btn btn-sm"
+                            id="logoutBtn"
+                        >
+                            Выйти
+                        </button>
+                    {% else %}
+                        <a href="/cart" class="btn btn-sm position-relative cart-btn">
+                            Корзина
+                            <span
+                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger js-cart-badge"
+                                {% if cart_count <= 0 %}style="display: none;"{% endif %}
+                            >
+                                {{ cart_count if cart_count > 0 else 0 }}
+                            </span>
+                        </a>
+
+                        <button
+                            type="button"
+                            class="btn btn-sm cart-btn"
+                            id="openAuthModalBtn"
+                        >
+                            Войти
+                        </button>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -72,33 +108,55 @@
             <div class="content-scroll-area">
                 <div class="tab-content pt-3" id="dishTabsContent">
                     {% for key, label in categories %}
-                        <div class="tab-pane fade {% if loop.first %}show active{% endif %}" id="{{ key|lower }}" role="tabpanel">
-                            {% if dishes.get(key) %}
+                        {% set items = dishes.get(key, []) %}
+                        <div
+                            class="tab-pane fade {% if loop.first %}show active{% endif %}"
+                            id="{{ key }}"
+                            role="tabpanel"
+                            aria-labelledby="{{ key }}-tab"
+                        >
+                            {% if items %}
                                 <div class="row">
-                                    {% for dish in dishes.get(key, []) %}
+                                    {% for dish in items %}
                                         <div class="col-md-4 col-sm-6 mb-4">
-                                            <div class="card h-100 shadow-sm">
+                                            <div class="card dish-card h-100 shadow-sm">
                                                 {% if dish.image_url %}
-                                                    <img src="{{ dish.image_url }}" alt="{{ dish.name }}" class="card-img-top dish-image">
+                                                    <img
+                                                        src="{{ dish.image_url }}"
+                                                        alt="{{ dish.name }}"
+                                                        class="card-img-top dish-image"
+                                                    />
                                                 {% else %}
-                                                    <div class="no-photo-placeholder d-flex align-items-center justify-content-center text-white">Нет фото</div>
+                                                    <div class="no-photo-placeholder d-flex align-items-center justify-content-center text-white">
+                                                        Нет фото
+                                                    </div>
                                                 {% endif %}
 
                                                 <div class="card-body d-flex flex-column">
                                                     <h5 class="card-title">{{ dish.name }}</h5>
+
                                                     <p class="card-text text-muted small flex-grow-1">
                                                         {{ (dish.description or '')[:50] }}
                                                         {% if dish.description and dish.description|length > 50 %}...{% endif %}
                                                     </p>
 
-                                                    <div class="d-flex justify-content-between align-items-center mt-2">
-                                                        <span class="fw-bold text-success">{{ "%.2f"|format(dish.price) }} ₽</span>
+                                                    <div class="d-flex justify-content-between align-items-center mt-2 gap-2">
+                                                        <span class="fw-bold text-success">
+                                                            {{ dish.price }} ₽
+                                                        </span>
 
-                                                        <form action="/add-to-cart" method="POST" class="js-add-to-cart-form">
-                                                            <input type="hidden" name="dish_id" value="{{ dish.id }}">
-                                                            <input type="hidden" name="dish_name" value="{{ dish.name }}">
-                                                            <input type="hidden" name="dish_price" value="{{ dish.price }}">
-                                                            <button type="submit" class="btn btn-primary">В корзину</button>
+                                                        <form
+                                                            class="add-to-cart-form js-add-to-cart-form"
+                                                            data-dish-id="{{ dish.id }}"
+                                                            action="/add-to-cart"
+                                                            method="POST"
+                                                        >
+                                                            <input type="hidden" name="dish_id" value="{{ dish.id }}" />
+                                                            <input type="hidden" name="dish_name" value="{{ dish.name }}" />
+                                                            <input type="hidden" name="dish_price" value="{{ dish.price }}" />
+                                                            <button type="submit" class="btn btn-primary btn-sm add-to-cart-btn">
+                                                                В корзину
+                                                            </button>
                                                         </form>
                                                     </div>
                                                 </div>
@@ -107,7 +165,9 @@
                                     {% endfor %}
                                 </div>
                             {% else %}
-                                <p class="text-center text-muted pt-4">Пока нет блюд в категории «{{ label }}».</p>
+                                <p class="text-center text-muted pt-4">
+                                    Пока нет блюд в категории «{{ label }}».
+                                </p>
                             {% endif %}
                         </div>
                     {% endfor %}
@@ -117,11 +177,13 @@
     </div>
 </div>
 
-{% include 'modals/auth_modal.html' %}
+<div id="toastContainer" class="toast-container-custom" aria-live="polite" aria-atomic="true"></div>
+
+{% include "auth_modal.html" %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/static/js/auth.js"></script>
-<script src="/static/js/cart.js"></script>
-
+<script src="/static/js/index.js"></script>
+<script src="/static/js/notification.js"></script>
 </body>
 </html>

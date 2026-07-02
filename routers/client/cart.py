@@ -1,88 +1,253 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from sqlalchemy.orm import Session
-from jose import jwt
+from collections import Counter
 import json
 
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import RedirectResponse
+from sqlalchemy.orm import Session, joinedload
+
+from routers.auth import get_optional_user
+from config import templates
 from database import get_db
 from models import CartItem, Dish, User
-from schemas import CartItemCreate
-from config import settings
-
 
 router = APIRouter(prefix="/cart", tags=["cart"])
 
 
-@router.post("/add")
-async def add_to_cart(
-        request: Request,
-        response: Response,
-        payload: CartItemCreate,
-        db: Session = Depends(get_db),
-):
+def _read_guest_cart(request: Request) -> list[int]:
+    raw = request.cookies.get("guest_cart")
+    if not raw:
+        return []
 
-    dish = db.query(Dish).filter(Dish.id == payload.dish_id).first()
-    if not dish:
-        raise HTTPException(status_code=404, detail="Блюдо не найдено")
+    try:
+        data = json.loads(raw)
+    except Exception:
+        return []
 
-    current_user = None
-    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    if not isinstance(data, list):
+        return []
 
-    if token:
+    result = []
+    for item in data:
         try:
-            payload_jwt = jwt.decode(token, settings.secret_key, algorithms=settings.algorithm)
-            sub = payload_jwt.get("sub")
-            if sub:
-                current_user = db.query(User).filter(User.id == int(sub)).first()
-        except Exception:
-            pass
+            result.append(int(item))
+        except (TypeError, ValueError):
+            continue
+
+    return result
 
 
-    if current_user:
-        existing_item = db.query(CartItem).filter(
-            CartItem.user_id == current_user.id,
-            CartItem.dish_id == payload.dish_id
-        ).first()
+def _write_guest_cart(response: RedirectResponse, cart: list[int]) -> None:
+    response.set_cookie(
+        key="guest_cart",
+        value=json.dumps(cart),
+        path="/",
+        httponly=True,
+        samesite="lax",
+    )
 
-        if existing_item:
-            existing_item.quantity += payload.quantity
-        else:
-            new_item = CartItem(user_id=current_user.id, dish_id=payload.dish_id, quantity=payload.quantity)
-            db.add(new_item)
 
-        db.commit()
+def _build_guest_cart_view(db: Session, dish_ids: list[int]):
+    counter = Counter(dish_ids)
+    if not counter:
+        return [], 0
 
-        cart_size = db.query(CartItem).filter(CartItem.user_id == current_user.id).count()
+    dishes = db.query(Dish).filter(Dish.id.in_(counter.keys())).all()
+    dishes_map = {dish.id: dish for dish in dishes}
 
-        return {
-            "status": "added",
-            "cart_size": cart_size,
-            "message": f"{dish.name} добавлено в вашу корзину",
-            "is_guest": False
-        }
+    items = []
+    total = 0
 
-    else:
-        guest_cart_cookie = request.cookies.get("guest_cart")
-        guest_ids = []
+    for dish_id, quantity in counter.items():
+        dish = dishes_map.get(dish_id)
+        if not dish:
+            continue
 
-        if guest_cart_cookie:
-            try:
-                guest_ids = json.loads(guest_cart_cookie)
-            except:
-                guest_ids = []
+        subtotal = dish.price * quantity
+        total += subtotal
 
-        for _ in range(payload.quantity):
-            guest_ids.append(payload.dish_id)
+        items.append({
+            "id": dish.id,
+            "dish_id": dish.id,
+            "quantity": quantity,
+            "dish": dish,
+            "subtotal": subtotal,
+        })
 
-        response.set_cookie(
-            key="guest_cart",
-            value=json.dumps(guest_ids),
-            max_age=60 * 60 * 24 * 7,
-            httponly=False
+    return items, total
+
+
+@router.get("")
+def view_cart(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
+):
+    if user:
+        cart_items = (
+            db.query(CartItem)
+            .options(joinedload(CartItem.dish))
+            .filter(CartItem.user_id == user.id)
+            .all()
         )
 
-        return {
-            "status": "added",
-            "cart_size": len(guest_ids),
-            "message": f"{dish.name} добавлено в корзину (как гость)",
-            "is_guest": True
-        }
+        total = sum(item.dish.price * item.quantity for item in cart_items if item.dish)
+
+        return templates.TemplateResponse(
+            "cart.html",
+            {
+                "request": request,
+                "cart_items": cart_items,
+                "total": total,
+                "is_guest_cart": False,
+            },
+        )
+
+    guest_cart = _read_guest_cart(request)
+    cart_items, total = _build_guest_cart_view(db, guest_cart)
+
+    return templates.TemplateResponse(
+        "cart.html",
+        {
+            "request": request,
+            "cart_items": cart_items,
+            "total": total,
+            "is_guest_cart": True,
+        },
+    )
+
+
+@router.post("/add/{dish_id}")
+def add_to_cart(
+    dish_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
+):
+    dish = db.query(Dish).filter(Dish.id == dish_id).first()
+    if not dish:
+        return RedirectResponse(url="/menu", status_code=302)
+
+    if user:
+        cart_item = db.query(CartItem).filter(
+            CartItem.user_id == user.id,
+            CartItem.dish_id == dish_id,
+        ).first()
+
+        if cart_item:
+            cart_item.quantity += 1
+        else:
+            cart_item = CartItem(user_id=user.id, dish_id=dish_id, quantity=1)
+            db.add(cart_item)
+
+        db.commit()
+        return RedirectResponse(url="/cart", status_code=302)
+
+    guest_cart = _read_guest_cart(request)
+    guest_cart.append(dish_id)
+
+    response = RedirectResponse(url="/cart", status_code=302)
+    _write_guest_cart(response, guest_cart)
+    return response
+
+
+@router.post("/increase/{item_id}")
+def increase_item(
+    item_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
+):
+    if user:
+        cart_item = db.query(CartItem).filter(
+            CartItem.id == item_id,
+            CartItem.user_id == user.id,
+        ).first()
+
+        if cart_item:
+            cart_item.quantity += 1
+            db.commit()
+
+        return RedirectResponse(url="/cart", status_code=302)
+
+    guest_cart = _read_guest_cart(request)
+    guest_cart.append(item_id)
+
+    response = RedirectResponse(url="/cart", status_code=302)
+    _write_guest_cart(response, guest_cart)
+    return response
+
+
+@router.post("/decrease/{item_id}")
+def decrease_item(
+    item_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
+):
+    if user:
+        cart_item = db.query(CartItem).filter(
+            CartItem.id == item_id,
+            CartItem.user_id == user.id,
+        ).first()
+
+        if cart_item:
+            cart_item.quantity -= 1
+            if cart_item.quantity <= 0:
+                db.delete(cart_item)
+            db.commit()
+
+        return RedirectResponse(url="/cart", status_code=302)
+
+    guest_cart = _read_guest_cart(request)
+
+    try:
+        guest_cart.remove(item_id)
+    except ValueError:
+        pass
+
+    response = RedirectResponse(url="/cart", status_code=302)
+    _write_guest_cart(response, guest_cart)
+    return response
+
+
+@router.post("/remove/{item_id}")
+def remove_item(
+    item_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
+):
+    if user:
+        cart_item = db.query(CartItem).filter(
+            CartItem.id == item_id,
+            CartItem.user_id == user.id,
+        ).first()
+
+        if cart_item:
+            db.delete(cart_item)
+            db.commit()
+
+        return RedirectResponse(url="/cart", status_code=302)
+
+    guest_cart = _read_guest_cart(request)
+    guest_cart = [dish_id for dish_id in guest_cart if dish_id != item_id]
+
+    response = RedirectResponse(url="/cart", status_code=302)
+    _write_guest_cart(response, guest_cart)
+    return response
+
+
+@router.post("/clear")
+def clear_cart(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
+):
+    if user:
+        db.query(CartItem).filter(CartItem.user_id == user.id).delete()
+        db.commit()
+        return RedirectResponse(url="/", status_code=302)
+
+    response = RedirectResponse(url="/", status_code=302)
+    response.delete_cookie(key="guest_cart", path="/")
+    return response

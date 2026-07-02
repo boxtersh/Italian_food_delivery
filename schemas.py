@@ -81,7 +81,7 @@ class OrderStatusUpdate(BaseModel):
 
 class UserCreate(BaseModel):
     email: EmailStr
-    name: str | None = None
+    name: str
     phone: str
     password: str
 
@@ -123,6 +123,6 @@ class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
+class CheckoutForm(BaseModel):
+    address: str = Field(..., min_length=5, max_length=255)
+    comment: Optional[str] = Field(None, max_length=500)

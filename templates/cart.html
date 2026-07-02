@@ -2,73 +2,149 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Корзина</title>
+    <title>Корзина — Delicia</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/cart.css">
 </head>
-<body class="bg-light">
+<body>
 
-<div class="container py-4">
-    <h2 class="mb-4">Ваша корзина</h2>
-
-    {% if not items %}
-        <div class="alert alert-info text-center">
-            Корзина пуста. Добавьте что-нибудь вкусное!
+<header class="delicia-header">
+    <div class="delicia-logo">
+        <div class="delicia-logo">
+            <img src="/static/images/uploads/logo/logo.webp" alt="Delicia" class="img-fluid" style="max-width: 100px; height: auto;">
         </div>
-        <a href="/" class="btn btn-primary mx-auto">Перейти в меню</a>
+    </div>
+    <h1 class="delicia-title">Ваша корзина</h1>
+</header>
+
+<main class="container py-4">
+
+    {% if cart_items %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <table class="table delicia-table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 90px;">Фото</th>
+                            <th>Блюдо</th>
+                            <th class="text-end" style="min-width: 100px;">Цена</th>
+                            <th class="text-center" style="width: 140px;">Кол-во</th>
+                            <th class="text-end" style="min-width: 120px;">Сумма</th>
+                            <th style="width: 100px;">Действие</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in cart_items %}
+                            <tr>
+                                <td class="p-2">
+                                    <img src="{{ item.dish.image_url or '/static/img/no-photo.png' }}"
+                                         alt="{{ item.dish.name }}"
+                                         class="delicia-img-square">
+                                </td>
+
+                                <td>
+                                    <strong class="d-block">{{ item.dish.name }}</strong>
+                                    {% if item.dish.description %}
+                                        <small class="text-muted d-block mt-1">
+                                            {{ item.dish.description[:60] }}{% if item.dish.description|length > 60 %}...{% endif %}
+                                        </small>
+                                    {% endif %}
+                                </td>
+
+                                <td class="text-end fw-semibold">{{ "%.2f"|format(item.dish.price) }} ₽</td>
+
+                                <td class="text-center">
+                                    <div class="input-group input-group-sm w-75 mx-auto border-0">
+                                        <form action="/cart/decrease/{{ item.id }}" method="post" style="display:inline;">
+                                            <button type="submit" class="btn btn-outline-secondary px-2">-</button>
+                                        </form>
+
+                                        <span class="input-group-text bg-transparent border-0 fw-bold">{{ item.quantity }}</span>
+
+                                        <form action="/cart/increase/{{ item.id }}" method="post" style="display:inline;">
+                                            <button type="submit" class="btn btn-outline-secondary px-2">+</button>
+                                        </form>
+                                    </div>
+                                </td>
+
+                                <td class="text-end fw-bold text-primary">{{ "%.2f"|format(item.dish.price * item.quantity) }} ₽</td>
+
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-outline-danger w-100"
+                                            onclick="openRemoveModal('{{ item.dish.name | e }}', '/cart/remove/{{ item.id }}')">
+                                        ✕
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <h2 class="h4 mb-0 delicia-total">Итого: {{ "%.2f"|format(total) }} ₽</h2>
+
+            <div class="d-flex gap-2 flex-wrap">
+                <button type="button" class="btn btn-secondary-outline"
+                        onclick="openClearModal('/cart/clear')">
+                    Очистить
+                </button>
+                <a href="/" class="btn btn-secondary-outline">← Продолжить покупки</a>
+
+                {% if not is_guest_cart %}
+                    <a href="/orders/checkout" class="btn btn-delicia-action">Оформить заказ</a>
+                {% else %}
+                    <a href="/auth/register?next=/orders/checkout" class="btn btn-delicia-action">
+                        Оформить заказ
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
     {% else %}
-        <div class="row">
-            <div class="col-md-8">
-                <div class="list-group shadow-sm">
-                    {% for item in items %}
-                        <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-3 py-3">
-                            <div>
-                                <h5 class="fw-bold mb-1">{{ item.dish.name }}</h5>
-                                {% if item.dish.description %}
-                                    <small class="text-muted text-truncate" style="max-width: 200px;">
-                                        {{ item.dish.description[:60] }}{% if item.dish.description|length > 60 %}...{% endif %}
-                                    </small>
-                                {% endif %}
-                            </div>
-                            <div class="text-end">
-                                <span class="badge bg-secondary me-2">{{ item.quantity }} шт.</span>
-                                <span class="fw-bold text-success">{{ "%.2f"|format(item.subtotal) }} ₽</span>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="card shadow-sm h-100 border-0">
-                    <div class="card-body d-flex flex-column justify-content-between">
-                        <div>
-                            <h4 class="card-title text-muted small">Итого к оплате</h4>
-                            <p class="card-text h2 text-success fw-bold mb-0">
-                                {{ "%.2f"|format(total) }} ₽
-                            </p>
-                            <p class="text-muted small mt-2">
-                                Позиций в заказе: {{ count }}
-                            </p>
-                        </div>
-
-                        <hr class="my-3">
-
-                        <div>
-                            {% if false %}
-                                <a href="/login" class="btn btn-warning w-100 mb-2">Войти для оформления</a>
-                            {% endif %}
-
-                            <button class="btn btn-success w-100 disabled" title="Функционал в разработке">
-                                Оформить заказ
-                            </button>
-                            <a href="/" class="btn btn-light w-100 mt-2 text-dark">Продолжить покупки</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="delicia-empty">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-shopping-cart text-muted mb-3" viewBox="0 0 16 16">
+                <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379l1.5 8A.5.5 0 0 1 4.5 10h9a.5.5 0 0 1 .491.408l2.398 8.003a.5.5 0 0 1-.607.71l-2.494-.997L12.893 20.5a.5.5 0 0 1-.393.225H4.115a.5.5 0 0 1-.481-.404A1.2 1.2 0 0 1 2.033 11H1.5a.5.5 0 0 1-.491-.412L.017 1.309A.5.5 0 0 1 .5 1zM5 15a2 2 1 1 0 4 0A2 2 0 0 1 5 15zm11-5a2 2 1 1 0 4 0 2 2 0 0 1-4 0zM9 1a1 1 0 1 0 2 0 1 1 0-2zm-2 10a2 2 1 1 1-4 0 2 2 0 0 1 4 0z"/>
+            </svg>
+            <h3 class="mb-2">Корзина пуста</h3>
+            <p class="text-muted mb-4">Добавьте что-нибудь вкусное из нашего меню.</p>
+            <a href="/" class="btn btn-delicia-action">Перейти к меню</a>
         </div>
     {% endif %}
+
+</main>
+
+<footer class="bg-white border-top py-3 mt-5 text-center text-muted small">
+    Delicia — Здесь начинается магия вкуса
+</footer>
+
+<div id="removeModalBackdrop" class="delicia-modal-backdrop">
+    <div class="delicia-modal">
+        <div class="delicia-modal-header">Удалить блюдо?</div>
+        <div class="delicia-modal-body" id="removeModalBody"></div>
+        <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-delicia-cancel" onclick="closeRemoveModal()">Отмена</button>
+            <form id="removeForm" method="post">
+                <button type="submit" class="btn btn-delicia-confirm">Удалить</button>
+            </form>
+        </div>
+    </div>
 </div>
 
+<div id="clearModalBackdrop" class="delicia-modal-backdrop">
+    <div class="delicia-modal">
+        <div class="delicia-modal-header">Очистить корзину?</div>
+        <div class="delicia-modal-body">Вы уверены, что хотите удалить все блюда из корзины?</div>
+        <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-delicia-cancel" onclick="closeClearModal()">Отмена</button>
+            <form id="clearForm" action="/cart/clear" method="post">
+                <button type="submit" class="btn btn-delicia-confirm">Очистить</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/cart_modal.js"></script>
 </body>
 </html>

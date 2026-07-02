@@ -1,18 +1,11 @@
 import enum
 from datetime import datetime
-from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    Enum,
-    ForeignKey,
-    Integer,
-    Numeric,
-    String,
-    Text,
-    func,
-)
-from sqlalchemy.orm import relationship
+from decimal import Decimal
+from typing import List, Optional
+
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Numeric, String, Text, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from database import Base
 
 
@@ -35,72 +28,88 @@ class OrderStatus(str, enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String(255), unique=True, index=True, nullable=False)
-    name = Column(String(100), nullable=True)
-    phone = Column(String(20), unique=True, nullable=True, index=True)
-    hashed_password = Column(String(255), nullable=False)
-    is_admin = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-
-    cart_items = relationship(
-        "CartItem", back_populates="user", cascade="all, delete-orphan"
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    phone: Mapped[Optional[str]] = mapped_column(String(20), unique=True, nullable=True, index=True)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), nullable=False
     )
-    orders = relationship("Order", back_populates="user")
+
+    cart_items: Mapped[List["CartItem"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    orders: Mapped[List["Order"]] = relationship(
+        back_populates="user",
+    )
 
 
 class Dish(Base):
     __tablename__ = "dishes"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-    price = Column(Numeric(10, 2), nullable=False)
-    category = Column(Enum(DishCategory), nullable=False, index=True)
-    is_available = Column(Boolean, default=True, nullable=False)
-    image_url = Column(String(500), nullable=True)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
+    category: Mapped[DishCategory] = mapped_column(
+        Enum(DishCategory), nullable=False, index=True
+    )
+    is_available: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    image_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
 
 class CartItem(Base):
     __tablename__ = "cart_items"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
-    dish_id = Column(Integer, ForeignKey("dishes.id"), nullable=False)
-    quantity = Column(Integer, nullable=False, default=1)
+    dish_id: Mapped[int] = mapped_column(
+        ForeignKey("dishes.id"),
+        nullable=False,
+    )
+    quantity: Mapped[int] = mapped_column(nullable=False, default=1)
 
-    user = relationship("User", back_populates="cart_items")
-    dish = relationship("Dish")
+    user: Mapped["User"] = relationship(back_populates="cart_items")
+    dish: Mapped["Dish"] = relationship()
 
 
 class Order(Base):
     __tablename__ = "orders"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    status = Column(
-        Enum(OrderStatus), nullable=False, default=OrderStatus.PENDING, index=True
-    )
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)
+    status: Mapped[str] = mapped_column(String(50), default="pending")
+    address: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    comment: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    total_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0)
+    created_at: Mapped[datetime] = mapped_column(default=func.now())
 
-    user = relationship("User", back_populates="orders")
-    items = relationship(
-        "OrderItem", back_populates="order", cascade="all, delete-orphan"
-    )
+    items: Mapped[List["OrderItem"]] = relationship(back_populates="order", cascade="all, delete-orphan")
+    user: Mapped["User"] = relationship(back_populates="orders")
 
 
 class OrderItem(Base):
     __tablename__ = "order_items"
 
-    id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(
-        Integer, ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    order_id: Mapped[int] = mapped_column(
+        ForeignKey("orders.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
-    dish_id = Column(Integer, ForeignKey("dishes.id"), nullable=False)
-    quantity = Column(Integer, nullable=False)
-    price = Column(Numeric(10, 2), nullable=False)
+    dish_id: Mapped[int] = mapped_column(
+        ForeignKey("dishes.id"),
+        nullable=False,
+    )
+    quantity: Mapped[int] = mapped_column(nullable=False)
+    price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
 
-    order = relationship("Order", back_populates="items")
-    dish = relationship("Dish")
+    order: Mapped["Order"] = relationship(back_populates="items")
+    dish: Mapped["Dish"] = relationship()

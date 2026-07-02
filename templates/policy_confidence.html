@@ -9,9 +9,9 @@
 </head>
 <body>
     <div class="banner">
-    <img src="/static/images/uploads/policy_confidence/policy_confidence.webp"
-         alt="Баннер политики конфиденциальности"
-         class="banner-image">
+        <img src="/static/images/uploads/policy_confidence/policy_confidence.webp"
+             alt="Баннер политики конфиденциальности"
+             class="banner-image">
     </div>
 
     <div class="pdf-container">
@@ -28,7 +28,11 @@
     </div>
 
     <div class="text-center mt-4">
-        <a href="/" class="btn btn-dark">← Вернуться на главную</a>
+        {% if request.query_params.get('from') == 'register' %}
+            <a href="/?auth=register&return_from=policy" class="btn btn-dark">← Вернуться к регистрации</a>
+        {% else %}
+            <a href="/" class="btn btn-dark">← Вернуться на главную</a>
+        {% endif %}
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
