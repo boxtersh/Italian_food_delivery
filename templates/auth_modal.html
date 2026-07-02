@@ -1,0 +1,69 @@
+<div id="authModal" class="auth-modal hidden">
+    <div class="auth-modal-backdrop" data-close-auth-modal></div>
+
+    <div class="auth-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+        <button type="button" class="auth-modal-close" data-close-auth-modal aria-label="Закрыть">×</button>
+
+        <div class="auth-tabs">
+            <button type="button" class="auth-tab active" data-auth-tab="login">Вход</button>
+            <button type="button" class="auth-tab" data-auth-tab="register">Регистрация</button>
+        </div>
+
+        <div class="auth-body">
+            <h2 id="authModalTitle">Авторизация</h2>
+
+            <div id="authMessage" class="auth-message hidden"></div>
+
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input id="loginEmail" name="email" type="email" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="loginPassword">Пароль</label>
+                    <input id="loginPassword" name="password" type="password" required />
+                </div>
+
+                <button type="submit" class="btn btn-primary auth-submit">Войти</button>
+            </form>
+
+            <form id="registerForm" class="auth-form hidden">
+                <div class="form-group">
+                    <label for="registerName">Имя</label>
+                    <input id="registerName" name="name" type="text" />
+                </div>
+
+                <div class="form-group">
+                    <label for="registerEmail">Email</label>
+                    <input id="registerEmail" name="email" type="email" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="registerPhone">Телефон</label>
+                    <input id="registerPhone" name="phone" type="text" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="registerPassword">Пароль</label>
+                    <input id="registerPassword" name="password" type="password" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="registerPasswordConfirm">Подтвердите пароль</label>
+                    <input id="registerPasswordConfirm" name="password_confirm" type="password" required />
+                </div>
+
+                <button type="submit" class="btn btn-primary auth-submit">Зарегистрироваться</button>
+
+                <div class="text-center mt-3 small text-muted">
+                    Нажимая на кнопку, вы даёте согласие на обработку персональных данных
+                    и соглашаетесь с
+                    <a href="/policy_confidence?from=register" class="text-decoration-underline">
+                        политикой конфиденциальности
+                    </a>.
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Панель администратора — Delicia</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/cart.css">
+    <link rel="stylesheet" href="/static/css/admin_panel.css">
+</head>
+<body class="bg-light">
+
+{% if request.query_params.get('msg') == 'deleted' %}
+    <div class="alert alert-success" role="alert">
+        Блюдо успешно скрыто из каталога!
+    </div>
+{% elif request.query_params.get('msg') == 'create' %}
+    <div class="alert alert-success" role="alert">
+        Блюдо успешно добавлено!
+    </div>
+{% elif request.query_params.get('msg') == 'update' %}
+    <div class="alert alert-info" role="alert">
+        Данные блюда обновлены.
+    </div>
+{% elif request.query_params.get('msg') == 'upload' %}
+    <div class="alert alert-info" role="alert">
+        Фото успешно загружено.
+    </div>
+{% endif %}
+
+<header class="delicia-header bg-white p-3 border-bottom">
+    <div class="container d-flex justify-content-between align-items-center">
+        <a href="/" class="d-flex align-items-center text-decoration-none">
+            <img src="/static/images/uploads/logo/logo.webp" alt="Delicia" class="img-fluid" style="max-width: 80px; height: auto;">
+            <span class="ms-2 fs-4 fw-bold">Администратор</span>
+        </a>
+        <div>
+            <a href="/" class="btn btn-outline-secondary">← Вернуться на главную</a>
+        </div>
+    </div>
+</header>
+
+<main class="container py-4">
+    <h2 class="mb-4">Панель администратора</h2>
+
+    <div class="row g-4">
+        <div class="col-md-8">
+                <div class="card admin-card shadow-sm border-0 flex-shrink-1 mb-3">
+                <div class="card-header bg-dark text-white admin-card-header">
+                    <h5 class="mb-0">Активные заказы</h5>
+                </div>
+                <div class="card-body p-0 overflow-auto" style="max-height: 280px;">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Пользователь</th>
+                                <th>Дата</th>
+                                <th>Сумма</th>
+                                <th>Статус</th>
+                                <th>Действие</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td>{{ order.id }}</td>
+                                <td>
+                                    {% if order.user %}
+                                        {{ order.user.name }} ({{ order.user.email }})
+                                    {% else %}
+                                        Гость
+                                    {% endif %}
+                                </td>
+                                <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td class="text-end">{{ "%.2f"|format(order.total) }} ₽</td>
+                                <td>
+                                    <span class="badge
+                                        {% if order.status.value == 'pending' %}bg-warning text-dark
+                                        {% elif order.status.value == 'confirmed' %}bg-info
+                                        {% elif order.status.value == 'delivering' %}bg-primary
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ order.status.value }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <form action="/admin/orders/{{ order.id }}/status" method="POST" class="d-inline">
+                                        <select name="new_status" class="form-select form-select-sm d-inline w-auto">
+                                            {% for status_value in ['pending', 'confirmed', 'delivering', 'completed', 'cancelled'] %}
+                                                <option value="{{ status_value }}" {% if order.status.value == status_value %}selected{% endif %}>
+                                                    {{ status_value }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary ms-1">OK</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">Активных заказов пока нет</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card admin-card shadow-sm border-0 flex-shrink-1">
+                <div class="card-header bg-secondary text-white admin-card-header">
+                    <h5 class="mb-0">Архив заказов</h5>
+                </div>
+                <div class="card-body p-0 overflow-auto" style="max-height: 280px;">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Пользователь</th>
+                                <th>Дата</th>
+                                <th>Сумма</th>
+                                <th>Статус</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in archived_orders %}
+                            <tr>
+                                <td>{{ order.id }}</td>
+                                <td>
+                                    {% if order.user %}
+                                        {{ order.user.name }} ({{ order.user.email }})
+                                    {% else %}
+                                        Гость
+                                    {% endif %}
+                                </td>
+                                <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td class="text-end">{{ "%.2f"|format(order.total) }} ₽</td>
+                                <td>
+                                    <span class="badge
+                                        {% if order.status.value == 'cancelled' %}bg-danger
+                                        {% elif order.status.value == 'completed' %}bg-success
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ order.status.value }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">Архива пока нет</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="admin-card-group">
+                <div class="card admin-card border-0">
+                    <div class="card-header bg-success text-white admin-card-header">Добавить блюдо</div>
+                    <div class="card-body p-3">
+                        <form action="/admin/dishes/create" method="POST">
+                            <div class="mb-2">
+                                <label class="small fw-bold text-muted">Название</label>
+                                <input type="text" name="name" class="form-control form-control-sm" required placeholder="Например: Маргарита">
+                            </div>
+                            <div class="mb-2">
+                                <label class="small fw-bold text-muted">Описание</label>
+                                <textarea name="description" class="form-control form-control-sm" rows="2" placeholder="Соус, сыр..."></textarea>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-8">
+                                    <label class="small fw-bold text-muted">Цена</label>
+                                    <input type="number" step="0.01" name="price" class="form-control form-control-sm" required placeholder="350.00">
+                                </div>
+                                <div class="col-4">
+                                    <label class="small fw-bold text-muted">Категория</label>
+                                    <select name="category" class="form-select form-select-sm">
+                                        <option value="PIZZA">PIZZA</option>
+                                        <option value="PASTA">PASTA</option>
+                                        <option value="SALAD">SALAD</option>
+                                        <option value="DESSERT">DESSERT</option>
+                                        <option value="DRINK">DRINK</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-2 mt-3">
+                                <label class="small fw-bold text-muted">URL изображения</label>
+                                <input type="url" name="image_url" class="form-control form-control-sm" placeholder="https://...">
+                            </div>
+                            <button type="submit" class="btn btn-success w-100 btn-sm">Добавить в меню</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card admin-card border-0">
+                    <div class="card-header bg-danger text-white admin-card-header">Удалить (скрыть) блюдо</div>
+                    <div class="card-body p-3">
+                        <p class="small text-muted mb-2">Выберите блюдо из списка, чтобы скрыть его из меню.</p>
+                        <form action="/admin/dishes/delete" method="POST">
+                            <div class="mb-2">
+                                <label class="small fw-bold text-muted">Выберите блюдо</label>
+                                <select name="dish_id" class="form-select form-select-sm" required>
+                                    {% if dishes %}
+                                        {% for dish in dishes %}
+                                            <option value="{{ dish.id }}">
+                                                {{ dish.name }} ({{ "%.2f"|format(dish.price) }} ₽)
+                                            </option>
+                                        {% endfor %}
+                                    {% else %}
+                                        <option value="" disabled>Нет блюд в базе</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-danger w-100 btn-sm">Скрыть из меню</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card admin-card border-0">
+                    <div class="card-header bg-info text-white admin-card-header">Загрузить фото (с компьютера)</div>
+                    <div class="card-body p-3">
+                        <p class="small text-muted mb-2">Выберите файл. В базу автоматически запишется путь вида /static/images/uploads/...</p>
+                        <form action="/admin/dishes/upload" method="POST" enctype="multipart/form-data">
+                            <div class="mb-2">
+                                <label class="small fw-bold text-muted">Блюдо</label>
+                                <select name="dish_id" class="form-select form-select-sm" required>
+                                    {% if dishes %}
+                                        {% for dish in dishes %}
+                                            <option value="{{ dish.id }}">{{ dish.name }}</option>
+                                        {% endfor %}
+                                    {% else %}
+                                        <option value="" disabled>Нет блюд</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <label class="small fw-bold text-muted">Файл изображения</label>
+                                <input type="file" name="file" accept="image/*" class="form-control form-control-sm" required>
+                            </div>
+                            <button type="submit" class="btn btn-info w-100 btn-sm">Загрузить фото</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card admin-card border-0">
+                    <div class="card-header bg-primary text-white admin-card-header">Редактировать блюдо</div>
+                    <div class="card-body p-3">
+                        <p class="small text-muted mb-2">Выберите блюдо, поля заполнятся автоматически.</p>
+
+                        <form action="/admin/dishes/update" method="POST" id="editDishForm">
+                            <input type="hidden" name="dish_id" id="edit-dish-id" required>
+
+                            <div class="mb-2">
+                                <label class="small fw-bold text-muted">Название</label>
+                                <input type="text" name="name" id="edit-name" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="small fw-bold text-muted">Цена (число)</label>
+                                <input type="number" step="0.01" name="price_raw" id="edit-price" class="form-control form-control-sm">
+                            </div>
+                            <div class="mb-2">
+                                <label class="small fw-bold text-muted">Описание</label>
+                                <textarea name="description" id="edit-description" class="form-control form-control-sm" rows="2"></textarea>
+                            </div>
+                            <div class="mb-2">
+                                <label class="small fw-bold text-muted">URL фото</label>
+                                <input type="text" name="image_url" id="edit-image-url" class="form-control form-control-sm" placeholder="https://...">
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" name="is_available_raw" id="edit-is-available" value="true" class="form-check-input">
+                                <label for="edit-is-available" class="form-check-label">Доступно в каталоге</label>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 btn-sm mt-2">Сохранить изменения</button>
+                        </form>
+                        <div class="mt-3 pt-3 border-top">
+                            <label class="small fw-bold text-muted">Выбрать блюдо для редактирования</label>
+                            <select id="edit-dish-selector" class="form-select form-select-sm mt-1">
+                                <option value="">-- Выберите блюдо --</option>
+                                {% if dishes %}
+                                    {% for dish in dishes %}
+                                        <option value="{{ dish.id }}"
+                                                data-name="{{ dish.name }}"
+                                                data-price="{{ dish.price }}"
+                                                data-description="{{ dish.description or '' }}"
+                                                data-image="{{ dish.image_url or '' }}"
+                                                data-available="{{ dish.is_available }}">
+                                            {{ dish.name }} ({{ "%.2f"|format(dish.price) }} ₽)
+                                        </option>
+                                    {% endfor %}
+                                {% else %}
+                                    <option value="" disabled>Нет блюд для редактирования</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="bg-white border-top py-3 mt-5 text-center text-muted small">
+    Delicia Admin — Панель управления
+</footer>
+
+<script src="/static/js/admin_panel.js"></script>
+</body>
+</html>

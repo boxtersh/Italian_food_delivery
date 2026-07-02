@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Личный кабинет</title>
+    <link rel="stylesheet" href="/static/css/client_profile.css" />
+
+</head>
+<body>
+<div class="cabinet-page">
+
+    <div class="cabinet-banner">
+        <img src="/static/images/uploads/logo/logo.webp" alt="Delicia" class="img-fluid" style="max-width: 100px; height: auto;">
+        <h2>Ваш профиль</h2>
+    </div>
+
+    <div class="cabinet-actions">
+        <a href="/" class="cabinet-btn">На главную</a>
+        <a href="/cart" class="cabinet-btn">В корзину</a>
+    </div>
+
+    <div class="cabinet-layout">
+        <div class="cabinet-grid">
+
+            <section class="card-box profile-card">
+                <h3 class="card-title">Клиент</h3>
+
+                <div class="profile-info">
+                    <div class="profile-item">
+                        <label>Имя</label>
+                        <input type="text" value="{{ current_user.name or '' }}" readonly>
+                    </div>
+
+                    <div class="profile-item">
+                        <label>Email</label>
+                        <input type="text" value="{{ current_user.email or '' }}" readonly>
+                    </div>
+
+                    <div class="profile-item">
+                        <label>Телефон</label>
+                        <input type="text" value="{{ current_user.phone or '' }}" readonly>
+                    </div>
+                </div>
+            </section>
+
+            <div class="orders-column">
+
+                <section class="card-box orders-card">
+                    <h3 class="card-title">Активные заказы</h3>
+
+                    {% if active_orders %}
+                    <div class="orders-list">
+                        {% for order in active_orders %}
+                        <div class="order-item">
+                            <strong>Заказ #{{ order.id }}</strong>
+                            <div>Статус: {{ order.status }}</div>
+                            {% if order.created_at %}
+                            <div>Создан: {{ order.created_at }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-text">Нет активных заказов</div>
+                    {% endif %}
+                </section>
+
+                <section class="card-box orders-card">
+                    <h3 class="card-title">Архивные заказы</h3>
+
+                    {% if archive_orders %}
+                    <div class="orders-list">
+                        {% for order in archive_orders %}
+                        <div class="order-item">
+                            <strong>Заказ #{{ order.id }}</strong>
+                            <div>Статус: {{ order.status }}</div>
+                            {% if order.created_at %}
+                            <div>Создан: {{ order.created_at }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-text">Нет архивных заказов</div>
+                    {% endif %}
+                </section>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+<script src="/static/js/index.js"></script>
+</body>
+</html>
