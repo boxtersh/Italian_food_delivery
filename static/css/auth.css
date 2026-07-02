@@ -1,0 +1,49 @@
+.auth-modal {
+    border-radius: 18px;
+    border: none;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.auth-modal .modal-header,
+.auth-modal .modal-body {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+.auth-modal .modal-title {
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+.auth-modal .form-control {
+    border-radius: 12px;
+    min-height: 46px;
+    border: 1px solid #d9d9d9;
+    box-shadow: none;
+}
+
+.auth-modal .form-control:focus {
+    border-color: #111;
+    box-shadow: 0 0 0 0.2rem rgba(17, 17, 17, 0.08);
+}
+
+.auth-btn {
+    min-height: 46px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.auth-modal a {
+    color: #111;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-modal a:hover {
+    text-decoration: underline;
+}
+
+.alert {
+    border-radius: 12px;
+    font-size: 0.95rem;
+}

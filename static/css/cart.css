@@ -1,0 +1,117 @@
+:root {
+    --delicia-peach: #FFD1A8;
+    --delicia-rose: #FFB79B;
+    --delicia-text: #5C3A21;
+    --delicia-accent: #D35400;
+}
+
+body {
+    background-color: #FFF8F0;
+    color: var(--delicia-text);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.delicia-header {
+    background: linear-gradient(135deg, var(--delicia-peach), var(--delicia-rose));
+    padding: 1.5rem;
+    text-align: center;
+    border-radius: 0 0 20px 20px;
+    margin-bottom: 2rem;
+}
+
+.delicia-logo img,
+.delicia-logo svg {
+    max-width: 100px;
+    margin-bottom: 0.5rem;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+}
+
+.delicia-title {
+    font-family: 'Brush Script MT', cursive;
+    font-size: 2.5rem;
+    color: var(--delicia-text);
+    text-shadow: 2px 2px 0 rgba(255,255,255,0.7), 4px 4px 8px rgba(0,0,0,0.2);
+    line-height: 1.1;
+    margin: 0;
+}
+
+.delicia-img-square {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    background-color: #f5f5f5;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.delicia-table th {
+    color: var(--delicia-text);
+    border-bottom: 2px solid var(--delicia-accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+}
+
+.delicia-total {
+    font-family: 'Brush Script MT', cursive;
+    font-size: 1.8rem;
+    color: var(--delicia-text);
+    font-weight: 700;
+}
+
+.btn-delicia-action {
+    background-color: var(--delicia-accent);
+    color: #fff;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 50px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 12px rgba(211, 84, 0, 0.3);
+    transition: transform 0.2s;
+}
+
+.btn-delicia-action:hover {
+    background-color: #B03A2E;
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(211, 84, 0, 0.4);
+}
+
+.btn-secondary-outline {
+    color: var(--delicia-text);
+    border-color: var(--delicia-text);
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+    border-radius: 50px;
+}
+
+.btn-secondary-outline:hover {
+    background-color: var(--delicia-text);
+    color: #fff;
+}
+
+.delicia-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.delicia-modal-backdrop {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+.delicia-modal-backdrop.show {
+    display: flex;
+}
+.delicia-modal {
+    background: #fff;
+    padding: 2rem;

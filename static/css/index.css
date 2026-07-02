@@ -1,0 +1,359 @@
+html,
+body {
+    height: 100%;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #facac1;
+}
+
+body {
+    overflow: hidden;
+    color: #212529;
+}
+
+.auth-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+}
+
+.auth-modal-dialog {
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+.hidden {
+    display: none;
+}
+
+.auth-message.error {
+    color: #dc3545;
+    font-weight: 500;
+}
+
+.auth-message.success {
+    color: #198754;
+    font-weight: 500;
+}
+
+.page-wrapper {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.banner {
+    height: 200px;
+    flex-shrink: 0;
+    overflow: hidden;
+    background: #f59076;
+}
+
+.banner-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.cart-btn {
+    background-color: #e36241;
+    border-color: #ec7b5e;
+    color: white;
+}
+
+.cart-btn:hover {
+    background-color: #f34522;
+    border-color: #f46ed3;
+    color: white;
+}
+
+.btn-danger-my {
+    background-color: #fa5a4d;
+}
+
+.btn-danger-my:hover {
+    background-color: #fb1504;
+    border-bottom: 3px solid #fa6596;
+}
+
+.tabs-toolbar {
+    height: 70px;
+    flex-shrink: 0;
+    border-bottom: 1px solid #e9ecef;
+    position: relative;
+    z-index: 10;
+    background: #fbd7bf;
+}
+
+.toolbar-inner {
+    min-height: 70px;
+    padding: 10px 0;
+}
+
+.nav-tabs {
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    white-space: nowrap;
+    flex-wrap: nowrap;
+}
+
+.nav-tabs::-webkit-scrollbar {
+    height: 6px;
+}
+
+.nav-tabs::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 999px;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    border-radius: 999px;
+    color: #495057;
+    font-weight: 600;
+    padding: 10px 18px;
+    background: transparent;
+    transition: 0.2s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    background-color: #e76848;
+    border: 2px solid #f197db;
+    color: #fde6e1;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #de532f;
+    color: #fff;
+}
+
+.toolbar-buttons .btn {
+    white-space: nowrap;
+}
+
+.content-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.content-scroll-area {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 20px;
+}
+
+.tab-content {
+    min-height: 100%;
+}
+
+.dish-card {
+    border: none;
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dish-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.12) !important;
+}
+
+.dish-image,
+.no-photo-placeholder {
+    height: 220px;
+    width: 100%;
+    object-fit: cover;
+}
+
+.no-photo-placeholder {
+    background: linear-gradient(135deg, #6c757d, #495057);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.card-title {
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.card-text {
+    line-height: 1.4;
+}
+
+.js-cart-badge {
+    min-width: 22px;
+    text-align: center;
+}
+
+.add-to-cart-btn {
+    background: linear-gradient(135deg, #dd6b4d, #c95637);
+    border: none;
+    color: #fff;
+    border-radius: 10px;
+    padding: 7px 14px;
+    font-weight: 600;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    box-shadow: 0 6px 14px rgba(201, 86, 55, 0.22);
+}
+
+.add-to-cart-btn:hover {
+    background: linear-gradient(135deg, #e37b5f, #d35d3f);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 18px rgba(201, 86, 55, 0.28);
+}
+
+.add-to-cart-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 10px rgba(201, 86, 55, 0.22);
+}
+
+.toast-container-custom {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 1080;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.cart-toast {
+    min-width: 290px;
+    max-width: 380px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #ffd8c2, #f3a683);
+    border: 1px solid #e69572;
+    box-shadow: 0 14px 32px rgba(181, 102, 68, 0.22);
+    color: #6e2f1f;
+    opacity: 0;
+    transform: translateY(-12px) scale(0.98);
+    transition: opacity 0.28s ease, transform 0.28s ease;
+    pointer-events: auto;
+}
+
+.cart-toast.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.cart-toast.hide {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+}
+
+.cart-toast-icon {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #e07a5f, #c75b3d);
+    color: #fff7f2;
+    font-weight: 700;
+    font-size: 1rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.cart-toast-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.cart-toast-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 3px;
+    color: #7c3322;
+}
+
+.cart-toast-text {
+    font-size: 0.92rem;
+    line-height: 1.35;
+    color: #8d4330;
+    word-break: break-word;
+}
+
+.cart-toast-close {
+    border: none;
+    background: transparent;
+    color: #9a4f3a;
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 4px;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.cart-toast-close:hover {
+    color: #6e2f1f;
+    transform: scale(1.08);
+}
+
+@media (max-width: 991.98px) {
+    .banner {
+        height: 240px;
+    }
+
+    .tabs-toolbar {
+        height: auto;
+    }
+
+    .toolbar-inner {
+        padding: 12px 0;
+    }
+
+    .toolbar-inner {
+        justify-content: center !important;
+    }
+
+    .nav-tabs {
+        width: 100%;
+        order: 1;
+    }
+
+    .toolbar-buttons {
+        width: 100%;
+        order: 2;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 767.98px) {
+    body {
+        overflow: auto;
+    }
+
+    .page-wrapper {
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .banner {
+        height: 190px;
+    }
+
+    .content-wrapper
